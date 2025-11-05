@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const CHUNK_SIZE = 1024 * 1024 * 10; // 10MB chunks
 
@@ -26,6 +26,10 @@ export default function Home() {
     });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (progress.error) alert(progress.error);
+    }, [progress.error]);
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -70,8 +74,8 @@ export default function Home() {
         const response = await fetch("/api/upload-file/chunk", {
             method: "POST",
             headers: {
-                uploadId: uploadId.toString(),
-                chunkNumber: chunkNumber.toString(),
+                "x-upload-id": uploadId.toString(),
+                "x-chunk-number": chunkNumber.toString(),
                 "Content-Type": "application/octet-stream",
             },
             body: chunkData,
@@ -124,6 +128,8 @@ export default function Home() {
 
                 const chunkData = await chunk.arrayBuffer();
 
+                console.log(uploadId);
+
                 await uploadChunk(uploadId, chunkNumber, chunkData);
 
                 setProgress((prev) => ({
@@ -141,6 +147,7 @@ export default function Home() {
                 status: "completed",
             }));
         } catch (error) {
+            console.log(error);
             setProgress((prev) => ({
                 ...prev,
                 status: "error",
@@ -183,11 +190,26 @@ export default function Home() {
         console.log(data);
     };
 
+    const deleteFiles = async () => {
+        const response = await fetch("/api/upload-file/init", {
+            method: "DELETE",
+        });
+        const data = await response.json();
+        console.log(data);
+    };
+
     return (
         <div className="container mx-auto max-w-2xl p-8">
             <h1 className="text-3xl font-bold mb-8 text-center">Large File Upload Test</h1>
 
-            <button onClick={getFiles}>Get Files</button>
+            <div className="flex justify-between">
+                <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={getFiles}>
+                    Get Files
+                </button>
+                <button className="bg-red-500 text-white px-4 py-2 rounded-md" onClick={deleteFiles}>
+                    Delete Files
+                </button>
+            </div>
 
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <div className="mb-6">

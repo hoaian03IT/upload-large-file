@@ -10,5 +10,6 @@ export async function POST(request: Request) {
     if (!uploadSession) {
         return NextResponse.json({ error: "Upload session not found" }, { status: 404 });
     }
+    await fileUploadService.completeUpload(Number(uploadId));
     return NextResponse.json({ message: "File uploaded successfully", uploadId }, { status: 200 });
 }

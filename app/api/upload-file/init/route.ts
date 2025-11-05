@@ -28,3 +28,8 @@ export async function GET() {
     const files = await fileUploadService.getFiles();
     return NextResponse.json(files);
 }
+
+export async function DELETE() {
+    await fileUploadService.deleteFiles();
+    return NextResponse.json({ message: "Files deleted successfully" });
+}
