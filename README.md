@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Large File Upload with Chunks
+
+A practice project demonstrating large file upload implementation using chunked uploads, transform, and merge functionality.
+
+## Features
+
+-   **Chunked Upload**: Files are split into 10MB chunks for reliable large file uploads
+-   **Progress Tracking**: Real-time upload progress with pause/resume functionality
+-   **Global State**: Upload progress is accessible throughout the app
+-   **Chakra UI**: Modern React component library for consistent UI
+-   **Prisma + PostgreSQL**: Database integration for file metadata storage
+
+## Tech Stack
+
+-   **Frontend**: Next.js 16, React 19, Chakra UI v3
+-   **Backend**: Next.js API Routes
+-   **Database**: PostgreSQL with Prisma ORM
+-   **Styling**: Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+1. **Install dependencies**:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+    ```bash
+    pnpm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Set up database**:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Run development server**:
 
-## Learn More
+    ```bash
+    pnpm dev
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Open** [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+-   `POST /api/upload-file/init` - Initialize upload session
+-   `POST /api/upload-file/chunk` - Upload individual chunks
+-   `POST /api/upload-file/complete` - Complete and merge chunks
 
-## Deploy on Vercel
+## Upload Flow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Initialize**: Create upload session with file metadata
+2. **Chunk Upload**: Send file in 10MB chunks sequentially
+3. **Transform**: Process chunks on server (validation, etc.)
+4. **Merge**: Combine chunks into final file
+5. **Complete**: Mark upload as finished
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Key Components
+
+-   `UploadProgressProvider` - Global upload state management
+-   `GlobalProgress` - App-wide progress indicator
+-   `FileUpload` - Chakra UI file input component
+-   File chunking logic in `contexts/upload-progress-context.tsx`

@@ -1,24 +1,23 @@
 import path from "path";
 import fs from "fs";
 import { PrismaClient } from "@/prisma/app/generated/prisma/client";
+import { TransformService } from "./transform.service";
 
 export class FileUploadService {
     private readonly uploadDir: string;
     private readonly unhandledChunksDir: string;
     private readonly prisma: PrismaClient;
+    private readonly transformService: TransformService;
 
     constructor() {
         this.prisma = new PrismaClient();
         this.uploadDir = path.join(process.cwd(), "uploads");
         this.unhandledChunksDir = path.join(process.cwd(), "unhandled-chunks");
+        this.transformService = new TransformService();
     }
 
     async getFiles() {
         return this.prisma.fileStorage.findMany();
-    }
-
-    async deleteFiles() {
-        return this.prisma.fileStorage.deleteMany();
     }
 
     getUploadSession(uploadId: number) {
@@ -114,12 +113,21 @@ export class FileUploadService {
         if (!fs.existsSync(chunkFilePath)) {
             fs.writeFileSync(chunkFilePath, chunkData);
         }
-
-        console.log(`📦 Saved chunk ${chunkNumber} for ${uploadSession.fileName}`);
     }
 
     async completeUpload(uploadId: number) {
+        const uploadSession = await this.getUploadSession(uploadId);
+        if (!uploadSession) {
+            throw new Error("Upload session not found");
+        }
+
         await this.mergeFiles(uploadId);
+
+        const splittedFileName = uploadSession.key.split(".");
+        const fileNameWithoutExtension = splittedFileName.slice(0, splittedFileName.length - 1).join("."); // to remove the last extension in case has multiple extensions
+
+        await this.transformService.transform(path.join(this.uploadDir, uploadSession.key), fileNameWithoutExtension);
+
         await this.prisma.fileStorage.update({
             where: {
                 id: uploadId,
@@ -128,5 +136,9 @@ export class FileUploadService {
                 status: "completed",
             },
         });
+    }
+
+    async deleteFiles() {
+        return this.prisma.fileStorage.deleteMany();
     }
 }
